@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Analytics - Premium Sales Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --color-primary: #0F110D; 
+            --color-accent: #C5D89D;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #f1f5f9; 
+        }
+        
+        #poster-container-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            min-height: 100vh;
+            overflow: auto;
+        }
+
+        #poster {
+            width: 1080px;
+            height: 1350px;
+            background: var(--color-primary);
+            color: white;
+            position: relative;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 60px 80px;
+            isolation: isolate;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            stroke-linecap: round;
+        }
+
+        .input-field {
+            @apply w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#C5D89D] outline-none transition-all font-medium;
+        }
+        .section-label {
+            @apply text-[11px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-2 block;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row h-screen overflow-hidden">
+
+    <!-- EDITOR SIDEBAR -->
+    <div class="w-full md:w-[420px] bg-white h-full border-r flex flex-col z-50 shadow-2xl">
+        <div class="p-8 border-b">
+            <h1 class="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                <i class="fas fa-chart-pie text-[#89986D]"></i>
+                Vision <span class="text-[#89986D]">Analytics</span>
+            </h1>
+            <p class="text-[11px] font-bold text-[#89986D] uppercase tracking-widest mt-1">Advanced Sales Insights</p>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-8 space-y-8">
+            <section>
+                <span class="section-label">Brand Identity</span>
+                <input type="text" id="inputBizName" class="input-field mb-4" placeholder="Enter Business Name" oninput="updatePreview()">
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="inputMonth" class="input-field" onchange="updatePreview()">
+                        <option>January</option><option>February</option><option>March</option>
+                        <option>April</option><option>May</option><option>June</option>
+                        <option>July</option><option>August</option><option>September</option>
+                        <option>October</option><option>November</option><option>December</option>
+                    </select>
+                    <input type="number" id="inputDays" class="input-field" value="12" placeholder="Days Left" oninput="updatePreview()">
+                </div>
+            </section>
+
+            <section>
+                <span class="section-label">Financial Metrics</span>
+                <div class="space-y-4">
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">TARGET</span>
+                        <input type="number" id="inputTarget" class="input-field pl-16" value="2500000" oninput="updatePreview()">
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">ACTUAL</span>
+                        <input type="number" id="inputAchieved" class="input-field pl-16" value="1850000" oninput="updatePreview()">
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <span class="section-label">Top Performers</span>
+                <div id="performersList" class="space-y-4"></div>
+                <button onclick="addPerformer()" class="w-full mt-3 py-3 border-2 border-dashed border-gray-200 rounded-xl text-xs font-bold text-gray-500 hover:border-[#89986D] hover:text-[#89986D] transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-plus-circle"></i> Add Performer
+                </button>
+            </section>
+
+            <section>
+                <span class="section-label">Marketing & Contact</span>
+                <input type="text" id="inputOffer" class="input-field mb-3" value="⚡ Special Incentive: Achiever of the Month Bonus!" oninput="updatePreview()">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="inputPhone" class="input-field" placeholder="WhatsApp" value="+92 345 678910" oninput="updatePreview()">
+                    <input type="text" id="inputSocial" class="input-field" placeholder="Social Link" value="@vision_insights" oninput="updatePreview()">
+                </div>
+            </section>
+        </div>
+
+        <div class="p-8 border-t bg-gray-50">
+            <button onclick="downloadPoster()" class="w-full bg-[#0F110D] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-black active:scale-[0.98] transition shadow-xl">
+                <i class="fas fa-rocket text-[#C5D89D]"></i> Generate High-Res Image
+            </button>
+        </div>
+    </div>
+
+    <!-- PREVIEW CANVAS AREA -->
+    <div id="poster-container-wrapper" class="flex-1">
+        <div id="poster">
+            <div class="flex justify-between items-center mb-16">
+                <div>
+                    <h1 id="dispBizName" class="text-7xl font-extrabold tracking-tighter mb-1 uppercase italic leading-none">BIZ ANALYSIS</h1>
+                    <div class="flex items-center gap-3">
+                        <div class="h-1 w-12 bg-[#C5D89D] rounded-full"></div>
+                        <p class="text-xl font-medium text-white/50 tracking-wide uppercase">Performance Hub — <span id="dispMonthSub" class="text-white font-bold">JANUARY</span></p>
+                    </div>
+                </div>
+                <div id="monthBadge" class="bg-[#C5D89D] text-black px-10 py-4 rounded-2xl font-black text-2xl tracking-widest uppercase shadow-2xl shadow-[#C5D89D]/20 transform rotate-2">
+                    JANUARY
+                </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-8 mb-16">
+                <div class="col-span-5 glass-card p-12 flex flex-col items-center justify-center relative border-t-2 border-white/10">
+                    <div class="relative w-64 h-64">
+                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="10" />
+                            <circle id="progressRing" cx="50" cy="50" r="44" fill="none" stroke="#C5D89D" stroke-width="10" 
+                                    stroke-dasharray="276" stroke-dashoffset="276" class="progress-ring__circle" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span id="dispPercent" class="text-7xl font-black tracking-tighter leading-none">0%</span>
+                            <span class="text-[10px] font-bold text-white/30 uppercase tracking-[0.4em] mt-2">Achievement</span>
+                        </div>
+                    </div>
+                    <div id="daysBadge" class="mt-12 px-8 py-3 rounded-full font-bold text-base flex items-center gap-3 bg-white/5 border border-white/10 shadow-inner">
+                        <span id="dispDaysIcon" class="text-xl">⏱️</span> <span id="dispDaysText" class="tracking-wide">0 Days Left</span>
+                    </div>
+                </div>
+
+                <div class="col-span-7 flex flex-col justify-between gap-6">
+                    <div class="glass-card p-8 flex items-center justify-between border-r-4 border-[#C5D89D]">
+                        <div>
+                            <p class="text-xs font-bold text-white/30 uppercase tracking-[0.3em] mb-2">Monthly Target</p>
+                            <h3 class="text-4xl font-black tracking-tight font-['Space_Grotesk']">PKR <span id="dispTarget">0</span></h3>
+                        </div>
+                        <i class="fas fa-bullseye text-3xl text-white/10"></i>
+                    </div>
+                    <div class="glass-card p-8 flex items-center justify-between border-r-4 border-white/20">
+                        <div>
+                            <p class="text-xs font-bold text-[#C5D89D]/50 uppercase tracking-[0.3em] mb-2">Current Revenue</p>
+                            <h3 class="text-4xl font-black tracking-tight text-[#C5D89D] font-['Space_Grotesk']">PKR <span id="dispAchieved">0</span></h3>
+                        </div>
+                        <i class="fas fa-chart-line text-3xl text-[#C5D89D]/30"></i>
+                    </div>
+                    <div class="glass-card p-8 flex items-center justify-between border-r-4 border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent">
+                        <div>
+                            <p class="text-xs font-bold text-white/30 uppercase tracking-[0.3em] mb-2">Gap To Goal</p>
+                            <h3 class="text-4xl font-black tracking-tight text-white/70 font-['Space_Grotesk']">PKR <span id="dispRemaining">0</span></h3>
+                        </div>
+                        <i class="fas fa-hourglass-half text-3xl text-white/10"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-14">
+                <div class="flex items-center gap-6 mb-10">
+                    <div class="bg-[#C5D89D] h-8 w-2 rounded-full"></div>
+                    <h4 class="text-2xl font-bold uppercase tracking-[0.5em] text-white/40">Elite Performers</h4>
+                    <div class="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent"></div>
+                </div>
+                <div id="dispPerformers" class="grid grid-cols-3 gap-8 min-h-[300px]"></div>
+            </div>
+
+            <div class="mt-auto">
+                <div id="offerBox" class="glass-card p-10 bg-gradient-to-r from-[#C5D89D]/10 via-transparent to-transparent border-l-4 border-[#C5D89D] mb-12 relative overflow-hidden">
+                    <div class="absolute right-0 top-0 opacity-10 pointer-events-none">
+                        <i class="fas fa-award text-9xl -rotate-12 translate-x-10 -translate-y-10"></i>
+                    </div>
+                    <h5 id="dispOffer" class="text-3xl font-bold italic tracking-tight text-white/90">Announcement Title...</h5>
+                </div>
+
+                <div class="flex justify-between items-end pt-8 border-t border-white/10">
+                    <div>
+                        <p class="text-xs font-bold text-white/20 uppercase tracking-[0.3em] mb-2">System Generated By</p>
+                        <h6 class="text-2xl font-bold font-['Space_Grotesk'] text-white">LIAQAT <span class="text-[#C5D89D]">ALI</span></h6>
+                    </div>
+                    <div class="text-right">
+                        <div id="dispContact" class="text-xl font-bold tracking-tight text-white/80 space-x-6">
+                            <span><i class="fab fa-whatsapp text-[#C5D89D]"></i> +92 300 0000000</span>
+                            <span><i class="fab fa-instagram text-[#C5D89D]"></i> @vision_analytics</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let performers = [
+            { id: 1, name: 'Sara Khan', sales: '850000', image: null }
+        ];
+
+        const el = (id) => document.getElementById(id);
+        const fmt = (n) => new Intl.NumberFormat('en-PK').format(n);
+
+        function updatePreview() {
+            const bizName = el('inputBizName').value || 'Vision Analytics';
+            const month = el('inputMonth').value;
+            const days = parseInt(el('inputDays').value) || 0;
+            const target = parseFloat(el('inputTarget').value) || 0;
+            const achieved = parseFloat(el('inputAchieved').value) || 0;
+            const remaining = Math.max(0, target - achieved);
+
+            el('dispBizName').innerText = bizName;
+            el('dispMonthSub').innerText = month;
+            el('monthBadge').innerText = month.toUpperCase();
+            el('dispTarget').innerText = fmt(target);
+            el('dispAchieved').innerText = fmt(achieved);
+            el('dispRemaining').innerText = fmt(remaining);
+            el('dispOffer').innerText = el('inputOffer').value || 'Limited incentive announced for top performers!';
+            el('dispContact').innerHTML = `
+                <span class="mr-6"><i class="fab fa-whatsapp text-[#C5D89D] mr-2"></i>${el('inputPhone').value || '+92 000 0000'}</span>
+                <span><i class="fab fa-instagram text-[#C5D89D] mr-2"></i>${el('inputSocial').value || '@vision_insights'}</span>
+            `;
+
+            const percent = target > 0 ? Math.round((achieved / target) * 100) : 0;
+            el('dispPercent').innerText = percent + '%';
+            
+            const ring = el('progressRing');
+            const circumference = 2 * Math.PI * 44; 
+            const offset = circumference - (Math.min(percent, 100) / 100) * circumference;
+            ring.style.strokeDasharray = circumference;
+            ring.style.strokeDashoffset = offset;
+
+            if (percent < 40) ring.style.stroke = '#F87171';
+            else if (percent < 80) ring.style.stroke = '#FB923C';
+            else ring.style.stroke = '#C5D89D';
+
+            el('dispDaysText').innerText = `${days} Days Left`;
+            const dBadge = el('daysBadge');
+            if (days <= 5) {
+                dBadge.className = "mt-12 px-8 py-3 rounded-full font-bold text-base flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400";
+                el('dispDaysIcon').innerText = "🔥";
+            } else {
+                dBadge.className = "mt-12 px-8 py-3 rounded-full font-bold text-base flex items-center gap-3 bg-white/5 border border-white/10 text-white/80";
+                el('dispDaysIcon').innerText = "⏱️";
+            }
+
+            renderPerformers();
+        }
+
+        function addPerformer() {
+            if (performers.length >= 3) return;
+            performers.push({ id: Date.now(), name: '', sales: '', image: null });
+            updateSidebar();
+            updatePreview();
+        }
+
+        function updateSidebar() {
+            const list = el('performersList');
+            list.innerHTML = '';
+            performers.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-50 p-4 rounded-xl border-2 border-transparent hover:border-[#C5D89D] transition-all relative group';
+                div.innerHTML = `
+                    <button onclick="removeP(${p.id})" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-[10px] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="flex gap-3">
+                        <div class="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0 relative overflow-hidden border border-gray-300">
+                             ${p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '<i class="fas fa-user text-gray-400 m-auto absolute inset-0 flex items-center justify-center"></i>'}
+                             <input type="file" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handlePImg(${p.id}, this)">
+                        </div>
+                        <div class="flex-1 space-y-2">
+                            <input type="text" class="input-field py-1 text-xs" placeholder="Full Name" value="${p.name}" oninput="updatePData(${p.id}, 'name', this.value)">
+                            <input type="number" class="input-field py-1 text-xs" placeholder="Personal Sales" value="${p.sales}" oninput="updatePData(${p.id}, 'sales', this.value)">
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function updatePData(id, field, val) {
+            const p = performers.find(x => x.id === id);
+            if(p) { p[field] = val; updatePreview(); }
+        }
+
+        function removeP(id) {
+            performers = performers.filter(x => x.id !== id);
+            updateSidebar();
+            updatePreview();
+        }
+
+        function handlePImg(id, input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    performers.find(x => x.id === id).image = e.target.result;
+                    updateSidebar();
+                    updatePreview();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function renderPerformers() {
+            const container = el('dispPerformers');
+            container.innerHTML = '';
+            const sorted = [...performers].sort((a,b) => (parseFloat(b.sales)||0) - (parseFloat(a.sales)||0));
+
+            performers.forEach(p => {
+                const isWinner = p.sales && p === sorted[0] && performers.length > 1;
+                const div = document.createElement('div');
+                div.className = `glass-card p-8 flex flex-col items-center text-center relative transition-transform hover:scale-[1.02] ${isWinner ? 'border-[#C5D89D]/40 bg-[#C5D89D]/5' : ''}`;
+                const avatar = p.image || `https://ui-avatars.com/api/?name=${p.name || 'U'}&background=C5D89D&color=000&bold=true`;
+                
+                div.innerHTML = `
+                    ${isWinner ? '<div class="absolute -top-4 bg-[#C5D89D] text-black px-5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">Top Performer</div>' : ''}
+                    <div class="relative mb-6">
+                        <img src="${avatar}" class="w-28 h-28 rounded-3xl object-cover border-2 ${isWinner ? 'border-[#C5D89D]' : 'border-white/10'} shadow-2xl">
+                        ${isWinner ? '<i class="fas fa-crown absolute -right-3 -top-3 text-2xl text-yellow-400 drop-shadow-lg"></i>' : ''}
+                    </div>
+                    <h5 class="text-2xl font-bold text-white mb-2 leading-tight">${p.name || 'Agent Name'}</h5>
+                    <div class="px-4 py-1.5 rounded-lg bg-white/5 text-[#C5D89D] font-black text-lg font-['Space_Grotesk']">
+                        PKR ${fmt(p.sales || 0)}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function fitToScreen() {
+            const wrap = el('poster-container-wrapper');
+            const post = el('poster');
+            const scale = Math.min((wrap.clientWidth - 40) / 1080, (wrap.clientHeight - 40) / 1350);
+            post.style.transform = `scale(${scale})`;
+            post.style.transformOrigin = 'center center';
+        }
+
+        async function downloadPoster() {
+            const post = el('poster');
+            const originalTransform = post.style.transform;
+            post.style.transform = 'none';
+            const canvas = await html2canvas(post, { scale: 3, useCORS: true, backgroundColor: '#0F110D' });
+            post.style.transform = originalTransform;
+            const link = document.createElement('a');
+            link.download = `Vision_Report_${el('inputMonth').value}.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        window.onresize = fitToScreen;
+        window.onload = () => {
+            updateSidebar();
+            updatePreview();
+            setTimeout(fitToScreen, 100);
+        };
+    </script>
+</body>
+</html>
